@@ -16,7 +16,8 @@ func TestParseInterval(t *testing.T) {
 		{"@every 30m", 30 * time.Minute, false},
 		{"@every 1h", time.Hour, false},
 		{"@every 5s", 5 * time.Second, false},
-		{"0 * * * *", 0, true}, // cron not supported yet
+		// cron expressions are now handled by ParseCron, not parseInterval
+		{"0 * * * *", 0, true}, // parseInterval doesn't handle cron
 		{"invalid", 0, true},
 	}
 

@@ -130,20 +130,36 @@ func (s *Scheduler) runJob(ctx context.Context, job Job) {
 	}
 }
 
-// shouldRun checks if enough time has passed based on the schedule.
-// Supports "@every <duration>" format.
+// shouldRun checks if a job should run based on schedule and last run time.
+// Supports "@every <duration>" and standard 5-field cron expressions.
 func shouldRun(schedule string, last, now time.Time) bool {
-	interval, err := parseInterval(schedule)
-	if err != nil {
-		return false
+	// Try interval first
+	if interval, err := parseInterval(schedule); err == nil {
+		return now.Sub(last) >= interval
 	}
-	return now.Sub(last) >= interval
+
+	// Try cron expression
+	if cron, err := ParseCron(schedule); err == nil {
+		// Only fire if current minute matches AND we haven't run this minute
+		truncNow := now.Truncate(time.Minute)
+		truncLast := last.Truncate(time.Minute)
+		return cron.Matches(now) && truncNow.After(truncLast)
+	}
+
+	return false
 }
 
-// shouldRunInitial returns true for first-time check (always true for interval schedules).
+// shouldRunInitial returns true for first-time check.
+// For intervals: always true (run immediately).
+// For cron: true only if current time matches the expression.
 func shouldRunInitial(schedule string, now time.Time) bool {
-	_, err := parseInterval(schedule)
-	return err == nil
+	if _, err := parseInterval(schedule); err == nil {
+		return true
+	}
+	if cron, err := ParseCron(schedule); err == nil {
+		return cron.Matches(now)
+	}
+	return false
 }
 
 // parseInterval parses "@every 30m" style schedules.
