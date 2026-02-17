@@ -46,7 +46,8 @@ Config lives at `~/.teeny-claw/config.json`:
   "provider": {
     "name": "anthropic",
     "model": "claude-sonnet-4-20250514",
-    "api_key_env": "ANTHROPIC_API_KEY"
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "base_url": ""
   },
   "tools": {
     "path": ["~/.teeny-claw/tools"],
@@ -65,7 +66,18 @@ Config lives at `~/.teeny-claw/config.json`:
 | Anthropic | `anthropic` | `ANTHROPIC_API_KEY` | Default. Claude models. |
 | OpenAI | `openai` | `OPENAI_API_KEY` | GPT-4o, o1, etc. |
 
-Any OpenAI-compatible API works — set `name: "openai"` and point the env var at your provider's key. For custom base URLs, use the Go API directly (`provider.NewOpenAI` with `WithBaseURL`).
+Any OpenAI-compatible API works — set `name: "openai"` and configure `base_url` for custom endpoints:
+
+```json
+{
+  "provider": {
+    "name": "openai",
+    "model": "llama3",
+    "api_key_env": "OLLAMA_API_KEY",
+    "base_url": "http://localhost:11434/v1"
+  }
+}
+```
 
 Set your API key: `export ANTHROPIC_API_KEY=sk-...`
 

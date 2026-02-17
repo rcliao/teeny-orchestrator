@@ -205,3 +205,38 @@ func TestFactory_New(t *testing.T) {
 		}
 	}
 }
+
+func TestFactory_NewFromConfig(t *testing.T) {
+	// Basic creation
+	p, err := NewFromConfig(Config{Name: "openai", APIKey: "key", Model: "gpt-4"})
+	if err != nil {
+		t.Fatalf("NewFromConfig basic: %v", err)
+	}
+	if p == nil {
+		t.Fatal("NewFromConfig returned nil")
+	}
+
+	// With base URL
+	p2, err := NewFromConfig(Config{Name: "openai", APIKey: "key", Model: "llama", BaseURL: "http://localhost:11434/v1"})
+	if err != nil {
+		t.Fatalf("NewFromConfig with BaseURL: %v", err)
+	}
+	if p2 == nil {
+		t.Fatal("NewFromConfig with BaseURL returned nil")
+	}
+
+	// Anthropic ignores base URL
+	p3, err := NewFromConfig(Config{Name: "anthropic", APIKey: "key", Model: "claude"})
+	if err != nil {
+		t.Fatalf("NewFromConfig anthropic: %v", err)
+	}
+	if p3 == nil {
+		t.Fatal("NewFromConfig anthropic returned nil")
+	}
+
+	// Unknown provider
+	_, err = NewFromConfig(Config{Name: "badprovider", APIKey: "key", Model: "m"})
+	if err == nil {
+		t.Fatal("NewFromConfig expected error for unknown provider")
+	}
+}
