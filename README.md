@@ -5,7 +5,7 @@ A lightweight autonomous agent runtime in Go. Loops an LLM with external CLI too
 ## What it does
 
 1. Builds context from bootstrap files + session history + learnings
-2. Calls an LLM (Anthropic Claude) with tool definitions
+2. Calls an LLM (Anthropic Claude, OpenAI, or any OpenAI-compatible API) with tool definitions
 3. Executes tools (external CLI binaries) when the LLM requests them
 4. Loops until the LLM stops calling tools or hits max iterations
 5. Saves session state for continuity
@@ -57,6 +57,15 @@ Config lives at `~/.teeny-claw/config.json`:
   }
 }
 ```
+
+### Supported Providers
+
+| Provider | `name` | `api_key_env` | Notes |
+|----------|--------|---------------|-------|
+| Anthropic | `anthropic` | `ANTHROPIC_API_KEY` | Default. Claude models. |
+| OpenAI | `openai` | `OPENAI_API_KEY` | GPT-4o, o1, etc. |
+
+Any OpenAI-compatible API works — set `name: "openai"` and point the env var at your provider's key. For custom base URLs, use the Go API directly (`provider.NewOpenAI` with `WithBaseURL`).
 
 Set your API key: `export ANTHROPIC_API_KEY=sk-...`
 
@@ -142,7 +151,7 @@ Configure scheduled jobs in `~/.teeny-claw/daemon.json`:
 cmd/teeny-orchestrator/    CLI entry point (Cobra)
 pkg/
   context/     Context builder — assembles system prompt + history + learnings
-  provider/    LLM provider adapters (Anthropic Claude)
+  provider/    LLM provider adapters (Anthropic, OpenAI-compatible)
   loop/        Core orchestration loop — LLM ↔ tools
   session/     Session persistence (JSON files)
   toolreg/     Tool registry — discovers and executes CLI tools
