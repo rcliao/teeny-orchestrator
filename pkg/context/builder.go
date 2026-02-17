@@ -15,8 +15,10 @@ import (
 
 // Config controls context construction limits.
 type Config struct {
-	BootstrapMaxChars      int // Per-file cap (default 20000)
-	BootstrapTotalMaxChars int // Total cap across all files (default 24000)
+	BootstrapMaxChars      int    // Per-file cap (default 20000)
+	BootstrapTotalMaxChars int    // Total cap across all files (default 24000)
+	LearningsMaxChars      int    // Max chars for injected learnings (default 4000)
+	LearningsTopic         string // Topic for learning queries (default "orchestrator learnings")
 }
 
 // DefaultConfig returns sensible defaults.
@@ -24,6 +26,8 @@ func DefaultConfig() Config {
 	return Config{
 		BootstrapMaxChars:      20000,
 		BootstrapTotalMaxChars: 24000,
+		LearningsMaxChars:      4000,
+		LearningsTopic:         "orchestrator learnings",
 	}
 }
 
@@ -32,6 +36,7 @@ type Builder struct {
 	workspace string
 	cfg       Config
 	registry  *toolreg.Registry
+	learnings string // Pre-fetched learnings to inject into system prompt
 }
 
 // NewBuilder creates a context builder for a workspace.
@@ -69,6 +74,15 @@ func (b *Builder) BuildSystemPrompt(summary string) string {
 	// Tool summaries
 	if toolSummary := b.buildToolSummary(); toolSummary != "" {
 		parts = append(parts, toolSummary)
+	}
+
+	// Learnings from eval data
+	if b.learnings != "" {
+		learnings := b.learnings
+		if len(learnings) > b.cfg.LearningsMaxChars {
+			learnings = learnings[:b.cfg.LearningsMaxChars] + "\n\n[... truncated]"
+		}
+		parts = append(parts, learnings)
 	}
 
 	// Conversation summary
@@ -146,6 +160,11 @@ func (b *Builder) loadBootstrapFiles() string {
 		return ""
 	}
 	return "# Workspace Context\n\n" + strings.Join(parts, "\n\n")
+}
+
+// SetLearnings sets pre-fetched learnings to inject into the system prompt.
+func (b *Builder) SetLearnings(learnings string) {
+	b.learnings = learnings
 }
 
 func (b *Builder) buildToolSummary() string {

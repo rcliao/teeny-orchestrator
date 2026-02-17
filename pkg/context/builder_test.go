@@ -89,6 +89,34 @@ func TestToolSummaryInPrompt(t *testing.T) {
 	}
 }
 
+func TestLearningsInjection(t *testing.T) {
+	b := NewBuilder(t.TempDir(), DefaultConfig(), nil)
+	b.SetLearnings("## Learnings from Previous Sessions\n\n- Use smaller prompts for simple tasks")
+	prompt := b.BuildSystemPrompt("")
+	if !strings.Contains(prompt, "Use smaller prompts") {
+		t.Fatal("learnings not injected into system prompt")
+	}
+}
+
+func TestLearningsTruncation(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.LearningsMaxChars = 50
+	b := NewBuilder(t.TempDir(), cfg, nil)
+	b.SetLearnings(strings.Repeat("learn ", 100))
+	prompt := b.BuildSystemPrompt("")
+	if !strings.Contains(prompt, "[... truncated]") {
+		t.Fatal("learnings not truncated")
+	}
+}
+
+func TestNoLearnings(t *testing.T) {
+	b := NewBuilder(t.TempDir(), DefaultConfig(), nil)
+	prompt := b.BuildSystemPrompt("")
+	if strings.Contains(prompt, "Learnings from Previous Sessions") {
+		t.Fatal("learnings section present when none set")
+	}
+}
+
 func TestNoBootstrapFiles(t *testing.T) {
 	b := NewBuilder(t.TempDir(), DefaultConfig(), nil)
 	prompt := b.BuildSystemPrompt("")
